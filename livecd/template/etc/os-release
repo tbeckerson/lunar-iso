@@ -1,7 +1,6 @@
-NAME="Lunar Linux"
+NAME="Moon Penguin"
 VERSION="%VERSION% (%CODENAME%)"
-ID=lunar
+ID=moonpenguin
 VERSION_ID=%VERSION%
-PRETTY_NAME="Lunar Linux %CNAME%"
-ANSI_COLOR="1;34"
-HOME_URL="http://lunar-linux.org/"
+PRETTY_NAME="Moon Penguin %CNAME%"
+ANSI_COLOR="1;31"

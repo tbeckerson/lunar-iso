@@ -42,19 +42,15 @@ menu_get_partition()
 
 partition_discs()
 {
-  EXPRESS="Create basic partition table and select target filesystems automatically"
-  CFDISK="Curses based disk partition table manipulator"
-  FDISK="Partition table manipulator"
-  PARTED="Create, destroy, resize, and copy partitions"
-  HELP="Please create a boot and root partition."
+  EXPRESS="Create basic partition table and select target filesystems automatically (recommended)"
+  GPTFDISK="Curses based disk partition table manipulator (know what you're doing first!!)"
+  HELP="If creating your own partitions, you need at least an ESP (type ef00) and root (type 8304) partition."
   TITLE="Partitioning Menu"
 
   DISC=$(menu_get_disc) &&
   PROG=`$DIALOG --title "$TITLE" --menu "$HELP" 0 0 0  \
           "express_mkpart" "$EXPRESS"                  \
-          "cfdisk"  "$CFDISK"                          \
-          "fdisk"   "$FDISK"                           \
-          "parted"  "$PARTED"` &&
+          "gptfdisk"  "$CFDISK"` &&
   PROMPT="Are you certain that you want to run $PROG on $DISC? (This will erase any partition selection you might have already performed)" &&
   if confirm "$PROMPT"; then
     unset PARTITIONS
@@ -112,9 +108,6 @@ menu_select_partitions()
     fi &&
 
     case "$FSYS" in
-      btrfs)
-        msgbox "Selecting btrfs as /boot is only supported with grub2, you will need to create a /boot partition and format it as ext2, ext3 or ext4 in order to use different bootloaders."
-        ;;
       swap)
         SWAP_ENABLED=1
         ;;
@@ -134,11 +127,7 @@ menu_select_partitions()
       MNT_PNT=${MNT_PNT%%/}
     fi
     FSCK_PASS=$(determine_fsck_pass $FSYS $MNTPNT) &&
-    if [ "$FSYS" == "xfs" ]; then
-      FORCE="-f"
-    elif [[ "$FSYS" =~ ext[234] ]]; then
-      FORCE="-F"
-    elif [[ "$FSYS" == "btrfs" ]]; then
+    if [ "$FSYS" == "btrfs" ]; then
       FORCE="-f"
     elif [[ "$FSYS" == "vfat" ]]; then  # Enforce creation of 32-bit filesystem
       FORCE="-F32"
@@ -155,8 +144,8 @@ menu_select_partitions()
         BOOT=$ROOT
       fi
     fi
-    if [ "$MNTPNT" == "/boot" ]; then
-      # ... -> except when this is a /boot partition
+    if [ "$MNTPNT" == "/efi" ]; then
+      # ... -> except when this is an /efi partition
       BOOT=$PART
     fi
     block_devices use $PART
@@ -169,14 +158,7 @@ select_partitions()
   if [ -z "$DONE_PARTITIONING" ]; then
     if confirm "Are you done making partitions?"; then
       DONE_PARTITIONING=1
-      case $ARCH in
-        "alpha")
-          msgbox \
-            "The partition on which the kernel is located must
-be formatted with the ext2 filesystem. Normally this
-means that your root or boot filesystem should be ext2."
           ;;
-      esac
       menu_select_partitions
     fi
   else

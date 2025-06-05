@@ -17,10 +17,12 @@ target: $(ISO_TARGET)/.target
 # fill the target with the base file required
 $(ISO_TARGET)/.base: target
 	@echo bootstrap-base
-	@mkdir -p $(ISO_TARGET)/{dev,proc,run,sys,tmp,lib,usr/{lib,src},var}
-	@ln -sf lib $(ISO_TARGET)/lib32
-	@ln -sf lib $(ISO_TARGET)/lib64
-	@ln -sf lib $(ISO_TARGET)/usr/lib32
+	@mkdir -p $(ISO_TARGET)/{dev,proc,run,sys,tmp,usr/{bin,lib},var}
+	@ln -sf usr/bin $(ISO_TARGET)/bin
+	@ln -sf usr/bin $(ISO_TARGET)/sbin
+	@ln -sf bin $(ISO_TARGET)/usr/sbin
+	@ln -sf usr/lib $(ISO_TARGET)/lib
+	@ln -sf usr/lib $(ISO_TARGET)/lib64
 	@ln -sf lib $(ISO_TARGET)/usr/lib64
 	@ln -sf ../run/lock $(ISO_TARGET)/var/lock
 	@ln -sf ../run $(ISO_TARGET)/var/run
@@ -42,7 +44,10 @@ $(ISO_TARGET)/.modules: $(ISO_SOURCE)/cache/.copied
 	@echo bootstrap-lunar
 	@mkdir -p $(ISO_TARGET)
 	@for archive in $(ISO_SOURCE)/cache/*-$(ISO_BUILD).tar.xz ; do \
-	  tar -xJf "$$archive" -C $(ISO_TARGET) || exit 1 ; \
+	  mkdir /tmp/$(archive) || exit 1 ; \
+	  tar -xf "$$archive" -C /tmp/$(archive) || exit 1 ; \
+	  rsync -a --preserve-dirlinks /tmp/$(archive)/* $(ISO_TARGET) || exit 1 ; \
+	  rm -rf /tmp/$(archive) || exit 1 ; \
 	done
 	@mkdir -p $(ISO_TARGET)/var/state/lunar
 	@touch $(ISO_TARGET)/var/state/lunar/packages.backup

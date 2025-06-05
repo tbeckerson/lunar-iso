@@ -24,7 +24,8 @@ MOTD_FILE="/usr/share/lunar-install/motd"
 ISO_DATE="%DATE%"
 
 # answers to questions asked at the beginning of installing
-BOOTLOADER="none"
+BOOTLOADER="systemd"
+EDITOR="nano"
 TZ="UTC"
 
 . /etc/lunar/config
@@ -35,7 +36,7 @@ done
 
 DIALOG="dialog
 --backtitle
-Lunar Linux Installer %VERSION% - %CODENAME% (%DATE%)
+Moon Penguin Installer %VERSION% - %CODENAME% (%DATE%)
 --stdout"
 
 LOG="/dev/tty7"

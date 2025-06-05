@@ -19,7 +19,7 @@ $(ISO_TARGET)/.install-moonbase: $(ISO_SOURCE)/spool/moonbase.tar.bz2 target
 	@echo install-moonbase
 	@mkdir -p $(ISO_TARGET)/var/lib/lunar/moonbase
 	@rm -r $(ISO_TARGET)/var/lib/lunar/moonbase
-	@tar -xjf $< -C $(ISO_TARGET)/var/lib/lunar moonbase/core moonbase/aliases
+	@tar -xf $< -C $(ISO_TARGET)/var/lib/lunar moonbase/core moonbase/aliases
 	@mkdir -p $(ISO_TARGET)/var/lib/lunar/moonbase/zlocal
 	@mkdir -p $(ISO_TARGET)/var/state/lunar/moonbase
 	@touch $(ISO_TARGET)/var/state/lunar/{packages,depends}{,.backup}

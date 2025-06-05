@@ -7,13 +7,13 @@
 
 # Which arch are we compiling for? Hint: i686 or x86_64
 
-ISO_ARCH = i686
+ISO_ARCH = x86_64
 
 # the ISO major version number
-ISO_MAJOR = 1.7.0
+ISO_MAJOR = 1.8.0
 
 # minor version (pre, rc, etc). leave empty for final release
-ISO_MINOR =
+ISO_MINOR = pre2025xx
 
 ifeq (,$(ISO_MINOR))
   ISO_VERSION = $(ISO_MAJOR)-$(ISO_ARCH)
@@ -24,10 +24,10 @@ endif
 # the ISO codename (i.e. Lacus Autumni)
 # Codename scheme: http://en.wikipedia.org/wiki/List_of_maria_on_the_Moon
 # Rotate between lacus, mare and palus for each release to avoid confusion
-ISO_CODENAME = Sinus Successus
+ISO_CODENAME = Space Penguin Alpha
 
 # the release/offical date tag - must be in the form of YYYYMMDD
-ISO_DATE = 20130531
+ISO_DATE = 20250603
 
 # the iso BUILD arch:
 ISO_BUILD = $(ISO_ARCH)-pc-linux-gnu
@@ -42,7 +42,7 @@ ISO_LABEL = $(shell echo -n Lunar-Linux $(ISO_CODENAME) | tr '[:space:]' _)
 ISO_LUNAR_MODULE = lunar
 
 # set this to number of makes for parallel builds or leave empty
-# ISO_MAKES = 2
+ISO_MAKES = 8
 
 # set this to the base optimization (e.g. i386, i586, i686, x86-64)
-ISO_GCCARCH = i686
+ISO_GCCARCH = x86-64_v2

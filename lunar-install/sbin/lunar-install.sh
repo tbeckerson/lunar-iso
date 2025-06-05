@@ -19,7 +19,7 @@
 
 trap ":" INT QUIT
 
-$DIALOG --infobox "Lunar Linux Installer %VERSION% - %CODENAME% starting... " 4 60
+$DIALOG --infobox "Moon Penguin Installer %VERSION% - %CODENAME% starting... " 4 60
 
 # turn off console blanking
 /usr/bin/setterm -blank 0
@@ -39,7 +39,7 @@ if [ -x /run.sh ]; then
   echo ""
   echo "  /--------------------------------------------------\\"
   echo "  |                                                  |"
-  echo "  |  Executing /run.sh instead of the Lunar Linux    |"
+  echo "  |  Executing /run.sh instead of the Moon Penguin    |"
   echo "  |  Installer! If something goes wrong then you're  |"
   echo "  |  on your own, sorry...                           |"
   echo "  |                                                  |"

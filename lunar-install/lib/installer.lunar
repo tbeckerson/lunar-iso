@@ -20,20 +20,14 @@ install_menu()
     # the total number of steps in the installer:
     STEPS=8
 
-    SH[1]="Please read the introduction if you are new to Lunar Linux.
-If you want to know more about the installation procedure
-and recent changes please visit http://lunar-linux.org/
-before proceeding."
+    SH[1]="Please read the introduction if you are new to Moon Penguin Linux."
     SH[2]="You can now set various system defaults that
-are not vital but make your linux system more friendly
-to your users."
+are not vital but make your linux system more friendly."
     SH[3]="You need to create partitions if you are installing on
 a new disc or in free space. If you want to delete other
 operating systems you will also need to partition your disc."
-    SH[4]="You need to mount a filesystem so that Lunar Linux can be
-transferred to it. Usually you make 3 to 5 separate
-partitions like /boot, /var and /usr. After mounting
-them the Lunar Linux packages can be transferred to them."
+    SH[4]="You need to mount a filesystem so that Moon Penguin Linux can be
+transferred to it."
     SH[5]="Swap is like temporary memory. It improves your
 systems performance. You can create a swapfile or
 even whole swap partitions."
@@ -41,9 +35,9 @@ even whole swap partitions."
 a boot loader that loads the kernel when you power on
 your computer. Without it linux does not run."
     SH[7]="During the transfer all programs and files that you
-need to run Lunar Linux will be copied to your system."
+need to run Moon Penguin Linux will be copied to your system."
     SH[8]="You can make some final preparations here before you begin
-using your new Lunar Linux system. Setting a root password is strongly
+using your new Moon Penguin Linux system. Setting a root password is strongly
 recommended now, but the rest of these operations can also be done after
 you've rebooted into your new system."
 
@@ -52,8 +46,8 @@ you've rebooted into your new system."
     F_LABEL="One step forward"
     F_HELP="Go forward one step in the installation procedure"
 
-    I_LABEL="Introduction into Lunar Linux"
-    I_HELP="Read about the advantages of using Lunar Linux"
+    I_LABEL="Introduction to Moon Penguin Linux"
+    I_HELP="Read about the advantages of using Moon Penguin Linux"
 
     C_LABEL="Select a keyboard map"
     C_HELP="Select keyboard map"
@@ -63,30 +57,9 @@ you've rebooted into your new system."
     E_HELP="Set global language"
     A_LABEL="Select a timezone"
     A_HELP="Select a timezone"
-    J_LABEL="Select a default editor"
-    J_HELP="Select a default editor"
-
-    P_LABEL="Partition discs"
-    P_HELP="Use fdisk or cfdisk to prepare hard drive partitions"
-    W_LABEL="Setup Linux Software RAID"
-    W_HELP="Linux software RAID can increase redundancy or speed of hard discs"
-    M_LABEL="Select target partitions"
-    L_LABEL="Select boot loader"
-    L_HELP="Select a boot loader to boot into Lunar"
-    L_OK="\\Z1"
-    M_HELP="Select target partitions for installation"
-    S_LABEL="Select a swapfile"
-    S_HELP="You don't need to setup a separate swap partition but can use a swapfile"
-    S_OK="\\Z1"
-    T_LABEL="Install lunar"
-    T_HELP="Create filesystems, swapfile and install all packages onto the target system NOW"
+    T_LABEL="Install Moon Penguin"
+    T_HELP="Create partitions & filesystems, then install all packages onto the target system"
     T_OK="\\Z1"
-    O_LABEL="Configure compiler optimizations"
-    O_HELP="Select architecture and optimizations"
-    O_OK="\\Z1"
-    K_LABEL="Install kernel(s)"
-    K_HELP="Install kernel(s) on the new installation"
-    K_OK="\\Z1"
 
     R_LABEL="Set root password"
     R_HELP="Set root password needed to access this system (the default password is empty)"
@@ -104,7 +77,7 @@ you've rebooted into your new system."
     X_LABEL="Exit into rescue shell or reboot"
     X_HELP="This launches a a rescue shell or reboots your system"
     Z_LABEL="Finished installing!"
-    Z_HELP="You're done! Now go reboot and use Lunar Linux!"
+    Z_HELP="You're done! Now go reboot and use Moon Penguin Linux!"
     Z_OK="\\Z0"
 
     STEP=1
@@ -124,21 +97,21 @@ you've rebooted into your new system."
   }
 
   if [ "$GUIDE" == "off" ]; then
-    CHOICES="X I C D E J P W M S T O L R U H V A Z"
+    CHOICES="X I C D E T R U H V A Z"
     STEPHELP="Step $STEP of $STEPS:"
   else
     case $STEP in
     1)  DEFAULT=I ; CHOICES="X I F" ;;
-    2)              CHOICES="B C D E A J F" ;;
-    3)  DEFAULT=P ; CHOICES="B P W M F" ;;
-    4)  DEFAULT=M ; CHOICES="B P W M F" ;;
-    5)  DEFAULT=S ; CHOICES="B P W M S L T F" ;;
-    6)  DEFAULT=L ; CHOICES="B P W M S L T F" ;;
-    7)  DEFAULT=T ; CHOICES="B P W M S L T F" ;;
-    8)              CHOICES="B R O U H V Z" ;;
+    2)              CHOICES="B C D E A F" ;;
+    3)  DEFAULT=P ; CHOICES="B F" ;;
+    4)  DEFAULT=M ; CHOICES="B F" ;;
+    5)  DEFAULT=S ; CHOICES="B T F" ;;
+    6)  DEFAULT=L ; CHOICES="B T F" ;;
+    7)  DEFAULT=T ; CHOICES="B T F" ;;
+    8)              CHOICES="B R U H V Z" ;;
     esac
   fi
-  COMMAND=`$DIALOG --title "Lunar Linux install menu" --nocancel --default-item "$DEFAULT" --item-help --extra-button --extra-label "Settings" --colors --menu "Step $STEP of $STEPS - \n\n${SH[$STEP]}" 0 0 0 $(choices $CHOICES)`
+  COMMAND=`$DIALOG --title "Moon Penguin Linux install menu" --nocancel --default-item "$DEFAULT" --item-help --extra-button --extra-label "Settings" --colors --menu "Step $STEP of $STEPS - \n\n${SH[$STEP]}" 0 0 0 $(choices $CHOICES)`
 
   case $? in
     3)
@@ -152,7 +125,6 @@ you've rebooted into your new system."
           "G" "Toggle guided menus on/off                     [$GUIDE]" \
           "C" "Toggle asking of confirmations on/off          [$CONFIRM]" \
           "D" "Toggle disabling the ability to perform steps  [$DISABLE]" \
-                                        "F" "Configure fstab mount style                    [$FSTAB_STYLE]" \
           "M" "Load more kernel modules" \
           "S" "Temporarily run a shell" \
           "Q" "Quit the installer"`
@@ -189,17 +161,10 @@ you've rebooted into your new system."
     D)  font_menu              ;;
     E)  lang_menu              ;;
     A)  timezone_menu          ;;
-    J)  editor_menu            ;;
 
-    P)  partition_discs        ;;
-    W)  raid_setup             ;;
-    M)  select_partitions      ;;
-    L)  select_bootloader      ;;
-    S)  select_swap_file       ;;
     T)  transfer               ;;
 
     R)  set_user_password root ;;
-    O)  chroot_run lunar optimize        ; O_OK=\\Z2; DEFAULT=U ;;
     U)  chroot_run luser                 ; U_OK=\\Z2; DEFAULT=H ;;
     H)  chroot_run lnet                  ; H_OK=\\Z2; DEFAULT=V ;;
     V)  chroot_run lservices             ; V_OK=\\Z2; DEFAULT=Z ;;
@@ -214,8 +179,6 @@ main()
   export PATH="/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin"
   # setting this var is supposed to prevent the enviro_check code now!
   export LUNAR_INSTALL=1
-
-  unset EDITOR
 
   TARGET="/mnt"
   CONFIRM=on

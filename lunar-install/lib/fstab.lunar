@@ -69,14 +69,8 @@ set_fs_label() {
   LABEL=$3
 
   case "$PTYPE" in
-    ext*)
-      tune2fs -L $LABEL $PART &> /dev/null
-      ;;
     btrfs)
       btrfs filesystem label $PART $LABEL &> /dev/null
-      ;;
-    xfs)
-      xfs_admin -L $LABEL $PART &> /dev/null
       ;;
     swap)
       mkswap -L swap${PART##*/} $PART &> /dev/null

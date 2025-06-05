@@ -18,11 +18,13 @@ stage2-target: $(ISO_TARGET)/.stage2-target
 # create base directory structure
 $(ISO_TARGET)/.stage2-base: stage2-target
 	@echo stage2-base
-	@ln -sf lib $(ISO_TARGET)/lib32
-	@ln -sf lib $(ISO_TARGET)/lib64
-	@mkdir -p $(ISO_TARGET)/usr
-	@ln -sf lib $(ISO_TARGET)/usr/lib32
+	@ln -sf usr/bin $(ISO_TARGET)/bin
+	@ln -sf usr/bin $(ISO_TARGET)/sbin
+	@ln -sf usr/lib $(ISO_TARGET)/lib
+	@ln -sf usr/lib $(ISO_TARGET)/lib64
+	@mkdir -p $(ISO_TARGET)/usr/{lib,bin}
 	@ln -sf lib $(ISO_TARGET)/usr/lib64
+	@ln -sf bin $(ISO_TARGET)/usr/sbin
 	@cp -r $(ISO_SOURCE)/template/etc $(ISO_TARGET)
 	@cp $(ISO_SOURCE)/kernels/conf/generic.$(ISO_ARCH) $(ISO_TARGET)/etc/lunar/local/.config.current
 	@echo MAKES=$(ISO_MAKES) > $(ISO_TARGET)/etc/lunar/local/optimizations.GNU_MAKE
@@ -35,7 +37,10 @@ stage2-base: $(ISO_TARGET)/.stage2-base
 $(ISO_TARGET)/.stage2-modules: stage2-target
 	@echo stage2-modules
 	@for archive in $(ISO_SOURCE)/cache/*-$(ISO_BUILD).tar.xz ; do \
-	  tar -xJf "$$archive" -C $(ISO_TARGET) || exit 1 ; \
+	  mkdir /tmp/$(archive) || exit 1 ; \
+	  tar -xf "$$archive" -C /tmp/$(archive) || exit 1 ; \
+	  rsync -a --preserve-dirlinks /tmp/$(archive)/* $(ISO_TARGET) || exit 1 ; \
+	  rm -rf /tmp/$(archive) || exit 1 ; \
 	done
 	@mkdir -p $(ISO_TARGET)/var/state/lunar
 	@touch $(ISO_TARGET)/var/state/lunar/packages.backup
@@ -61,7 +66,7 @@ $(ISO_TARGET)/.stage2-extract-moonbase: stage2-target $(ISO_SOURCE)/spool/moonba
 	@echo stage2-extract-moonbase
 	@mkdir -p $(ISO_TARGET)/var/lib/lunar/moonbase
 	@rm -r $(ISO_TARGET)/var/lib/lunar/moonbase
-	@tar -xjf $(ISO_SOURCE)/spool/moonbase.tar.bz2 -C $(ISO_TARGET)/var/lib/lunar moonbase/core moonbase/aliases
+	@tar -xf $(ISO_SOURCE)/spool/moonbase.tar.bz2 -C $(ISO_TARGET)/var/lib/lunar moonbase/core moonbase/aliases
 	@mkdir -p $(ISO_TARGET)/var/lib/lunar/moonbase/zlocal
 	@mkdir -p $(ISO_TARGET)/var/state/lunar/moonbase
 	@touch $(ISO_TARGET)/var/state/lunar/packages{,.backup}

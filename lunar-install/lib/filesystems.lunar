@@ -34,11 +34,6 @@ menu_list_targets()
 
       PTYPE=$(file -Ls $DEVICE 2>&1 | cat)
       case $PTYPE in
-        *ext4*) PTYPE="(ext4)" ;;
-        *ext3*) PTYPE="(ext3)" ;;
-        *ext2*) PTYPE="(ext2)" ;;
-        *XFS*) PTYPE="(XFS)" ;;
-        *Minix*) PTYPE="(minix)" ;;
         *BTRFS*) PTYPE="(btrfs)" ;;
         *FAT*) PTYPE="(FAT/FAT32)" ;;
         *) PTYPE="(unknown)" ;;
@@ -62,24 +57,14 @@ menu_list_targets()
 menu_get_filesystem()
 {
   TITLE="Filesystem Selection Menu"
-  HELP="Please select a filesystem. A '*' means that this is a journalling filesystem, which provides better data security against system crashes etc."
+  HELP="Please select a filesystem."
 
-  EXT4="Fourth Extended file system (*)"
-  BTRFS="BTree file system (*)"
-  EXT3="Third Extended file system (*)"
-  EXT2="Second Extended file system"
-  REISER="Reiserfs file system (*)"
-  XFS="XFS file system (*)"
-  JFS="JFS file system (*)"
-  VFAT="FAT32 file system"
+  VFAT="FAT32 file system (ESP partition on /efi)"
+  BTRFS="BTree file system (all other partitions except swap)"
   SWAP="Swap (Virtual memory or paging filesystem)"
 
   $DIALOG --title "$TITLE" --default-item "ext4" --menu "$HELP" 0 0 0 \
-    "ext4"      "$EXT4"    \
     "btrfs"     "$BTRFS"   \
-    "ext3"      "$EXT3"    \
-    "ext2"      "$EXT2"    \
-    "xfs"       "$XFS"     \
     "vfat"      "$VFAT"    \
     "swap"      "$SWAP"
 }
@@ -87,7 +72,7 @@ menu_get_filesystem()
 select_swap_file()
 {
   LOCATION_PROMPT="Please enter the location for the swapfile."
-  SIZE_PROMPT="Enter the size (in MB) of the swapfile you want to generate. It is recommended make it twice the amount of physical RAM. TMPFS users will need more swap (typically 1000MB)."
+  SIZE_PROMPT="Enter the size (in MB) of the swapfile you want to generate. Note that Moon Penguin uses ZRAM, and a swapfile or swap partition is probably not necessary."
 
   SWAPFILE=$(inputbox "$LOCATION_PROMPT" "/swapfile") &&
   if [ -n "$SWAPFILE" ]; then
@@ -116,8 +101,8 @@ determine_mount_opts()
     if [ "$2" == "swap" ]; then
       echo "defaults,discard"
     else
-      if [[ "$2" =~ (ext4|btrfs|xfs) ]]; then
-        echo "defaults,noatime,discard"
+      if [ "$2" == "btrfs" ]; then
+        echo "defaults,relatime,compress=zstd:3"
       else
         echo "defaults,noatime"
       fi
@@ -146,13 +131,11 @@ get_mount_point()
   local POINT ROOT_H BOOT_H HOME_H USR_H VAR_H SRV_H OPT_H LOCAL_H C_H
 
   ROOT_H="The root file system"
-  BOOT_H="Kernels and static files for the boot loader"
+  EFI_H="Kernel images for system boot"
   HOME_H="User home directories"
-  USR_H="Static data"
-  VAR_H="Variable data (logs, tarball cache etc)"
-  SRV_H="Data for services"
+  USR_H="Core system programs and libraries"
+  VAR_H="User-installed programs, and variable data (logs, tarball cache etc)"
   OPT_H="Add-on application software packages (legacy)"
-  LOCAL_H="Local hierarchy"
   C_H="Enter mount point manually"
 
   if [ "$1" == "swap" ]; then
@@ -160,15 +143,13 @@ get_mount_point()
   else
     POINT=$($DIALOG --title "Select a mount point" --menu "" 0 0 0 \
       "/"          "$ROOT_H" \
-      "/boot"      "$BOOT_H" \
+      "/efi"       "$EFI_H" \
       "/home"      "$HOME_H" \
       "/usr"       "$USR_H" \
       "/var"       "$VAR_H" \
-      "/srv"       "$SRV_H" \
       "/opt"       "$OPT_H" \
-      "/usr/local" "$LOCAL_H" \
-      "C"          "$C_H")
-    if [ "$POINT" = "C" ]; then
+      "manual"     "$C_H")
+    if [ "$POINT" = "manual" ]; then
       POINT=$(inputbox "Please enter a mount point" "")
     fi
     if [ -z "$POINT" -a -z "$ROOT" ]; then

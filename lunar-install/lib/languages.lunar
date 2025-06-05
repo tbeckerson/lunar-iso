@@ -30,7 +30,7 @@ lang_menu()
 
   TITLE="Language Selection Menu"
   HELP="Please select your preferred langauge. This will only set the LANG variable."
-  ILANG=${ILANG:-en_US.UTF-8}
+  ILANG=${ILANG:-C.UTF-8}
   ILANG=$($DIALOG --title "Language Selection Menu" --default-item "$ILANG" --menu "$HELP" 22 60 16 $(show_languages))
   if [ $? == 0 ]; then
     E_OK=\\Z2

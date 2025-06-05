@@ -14,11 +14,8 @@ ISO_MODULES=acl            \
             dosfstools     \
             dracut         \
             e2fsprogs      \
-            e3             \
-            ed             \
             elfutils       \
             expat          \
-            fhs            \
             file           \
             findutils      \
             flex           \
@@ -35,8 +32,6 @@ ISO_MODULES=acl            \
             iproute2       \
             iputils        \
             iptables       \
-            irssi          \
-            jfsutils       \
             json-c         \
             kbd            \
             kmod           \
@@ -71,7 +66,6 @@ ISO_MODULES=acl            \
             openssl        \
             parted         \
             perl           \
-            pcre           \
             pcre2          \
             procps         \
             popt           \
@@ -79,7 +73,6 @@ ISO_MODULES=acl            \
             sed            \
             shadow         \
             systemd        \
-            systemd-sysv   \
             tar            \
             timezone-data  \
             userspace-rcu  \
@@ -87,7 +80,6 @@ ISO_MODULES=acl            \
             vim            \
             wget           \
             which          \
-            xfsprogs       \
             xz             \
             zlib           \
             zstd

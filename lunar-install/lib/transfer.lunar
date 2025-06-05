@@ -16,7 +16,7 @@
 
 transfer()
 {
-  msgbox "You should now be ready to install Lunar Linux to your system. Lunar Linux will now create filesystems if needed, make a swapfile if it was selected, and install all Lunar Linux packages to the newly setup system. Make sure you are done with partitioning and filesystem selection."
+  msgbox "You should now be ready to install Moon Penguin Linux to your system. Moon Penguin Linux will now create filesystems if needed, make a swapfile if it was selected, and install all Moon Penguin Linux packages to the newly setup system. Make sure you are done with partitioning and filesystem selection."
   if confirm "Are you ready to install lunar?" ;  then
     clear
 
@@ -110,14 +110,17 @@ transfer()
 
     (
       percent_msg "Creating base LSB directories"
-      mkdir -p bin boot dev etc home lib mnt media
-      mkdir -p proc root sbin srv tmp usr var opt
-      mkdir -p sys
-      if [ `arch` == "x86_64" ]; then
-        ln -sf lib lib64
-        ln -sf lib usr/lib64
-      fi
-      mkdir -p usr/{bin,games,include,lib,libexec,local,sbin,share,src}
+      mkdir -p boot mnt opt
+      mkdir -p efi/{loader,EFI/{BOOT,Linux,systemd}}
+      mkdir -p etc/{kernel,pam.d,systemd/{network,system,system-preset},sysupdate.d,udev/rules.d}
+      mkdir -p usr/{bin,etc,include,lib,libexec,local,share,src}
+      mkdir -p var/{cache,lib/{confexts,extensions},local,log,mail,opt,spool,tmp}
+      ln -sf usr/bin bin
+      ln -lf usr/bin sbin
+      ln -sf usr/lib lib
+      ln -sf usr/lib lib64
+      ln -sf bin usr/sbin
+      ls -sf lib usr/lib64
       mkdir -p usr/share/{dict,doc,info,locale,man,misc,terminfo,zoneinfo}
       mkdir -p usr/share/man/man{1,2,3,4,5,6,7,8}
       ln -sf share/doc usr/doc
@@ -132,35 +135,36 @@ transfer()
       mkdir -p var/{cache,lib,log,spool,state}/lunar
       mkdir -p var/state/discover
       mkdir -p var/spool/mail
-      mkdir -p media/{cdrom0,cdrom1,floppy0,floppy1,mem0,mem1}
       chmod 0700 root
       chmod 1777 tmp var/tmp
 
+# is this needed??
+# base directories should be made above ^^
+# what files does it include?
+# will systemd fill these in?
       if [ -f /var/cache/lunar/aaa_base.tar.xz ]; then
         percent_msg "Installing aaa_base: base directories and files"
-        tar xJf /var/cache/lunar/aaa_base.tar.xz 2> /dev/null
+        mkdir -p /tmp/aaa
+        tar xf /var/cache/lunar/aaa_base.tar.xz -C /tmp/aaa 2> /dev/null
+        rsync -a --keep-dirlinks /tmp/aaa/* $TARGET
+        rm -rf /tmp/aaa
       fi
+# especially devices,
+# can systemd handle this??
       if [ -f /var/cache/lunar/aaa_dev.tar.xz ]; then
         percent_msg "Installing aaa_dev: device nodes"
-        tar xJf /var/cache/lunar/aaa_dev.tar.xz 2> /dev/null
+        tar xf /var/cache/lunar/aaa_dev.tar.xz 2> /dev/null
       fi
 
-      for LINE in $(cat $PACKAGES_LIST | grep -v -e '^lilo:' -e '^grub:' -e '^grub2:') ; do
-        MOD=$(echo $LINE | cut -d: -f1)
-        VER=$(echo $LINE | cut -d: -f4)
-        SIZ=$(echo $LINE | cut -d: -f5)
-        percent_msg "Installing $MOD-$VER ($SIZ)\n\n($(basename /var/cache/lunar/$MOD-$VER-*.tar.xz))"
-        transfer_package $MOD
-      done
-
-      percent_msg "Installing moonbase"
+percent_msg "Installing moonbase"
       (
         cd $TARGET/var/lib/lunar
-        tar xjf $MOONBASE_TAR 2> /dev/null
-        tar j --list -f $MOONBASE_TAR | sed 's:^:/var/lib/lunar/:g' > $TARGET/var/log/lunar/install/moonbase-${ISO_DATE}
+        tar xf $MOONBASE_TAR 2> /dev/null
+        tar --list -f $MOONBASE_TAR | sed 's:^:/var/lib/lunar/:g' > $TARGET/var/log/lunar/install/moonbase-${ISO_DATE}
         mkdir -p moonbase/zlocal
       ) &> $LOG
 
+      # already commented out by original author:
       # transfer sources
       #percent_msg "Copying sources"
       #cp /var/spool/lunar/* $TARGET/var/spool/lunar/
@@ -217,11 +221,8 @@ transfer()
         fi
 
         echo -e "$FSTAB" >> etc/fstab
-        make_lilo_conf
-        make_grub_conf
 
         # some more missing files:
-        cp /etc/lsb-release $TARGET/etc/
         cp /etc/os-release $TARGET/etc/
         cp /etc/issue{,.net} $TARGET/etc/
 
@@ -229,8 +230,8 @@ transfer()
         GCCVER=$(chroot_run lvu installed gcc | awk -F\. '{ print $1"_"$2 }')
 
         cat <<EOF> $TARGET/etc/lunar/local/config
-  LUNAR_COMPILER="GCC_$GCCVER"
-    LUNAR_MODULE="lunar"
+LUNAR_COMPILER="GCC_$GCCVER"
+LUNAR_MODULE="lunar"
 LUNAR_ALIAS_UDEV="systemd"
 LUNAR_ALIAS_KMOD="kmod"
 LUNAR_ALIAS_KERNEL_HEADERS="kernel-headers"
@@ -264,7 +265,7 @@ EOF
         fi
       ) &> $LOG
     # really we are done now ;^)
-    ) | $DIALOG --title " Installing Lunar Linux " --gauge "" 10 70 0
+    ) | $DIALOG --title " Installing Moon Penguin Linux " --gauge "" 10 70 0
 
     cd /
 
@@ -274,7 +275,12 @@ EOF
     T_OK=\\Z2
     O_OK=
 
-    install_bootloader &&
+# install systemd for bootloader
+# replaces install_bootloader and
+# bootloader.lunar script
+      chroot_run lsh update_plugin $BOOTLOADER "install"
+      chroot_run bootctl install
+
     install_kernels
   fi
 }

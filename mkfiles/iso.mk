@@ -3,9 +3,6 @@
 
 iso: $(ISO_SOURCE)/lunar-$(ISO_VERSION).iso
 
-# Blank for i686 builds for now
-XORRISO_EFI_OPTS :=
-
 # Clean stage2 markers and mark the start of iso
 $(ISO_TARGET)/.iso-target: kernel pack
 	@echo iso-target
@@ -26,9 +23,7 @@ iso-tools:
 # Remove non iso modules
 include $(ISO_SOURCE)/conf/modules.iso
 
-SYSLINUX_FILES=isolinux.bin isohdpfx.bin ldlinux.c32 libcom32.c32 libutil.c32
-
-$(ISO_TARGET)/.iso-modules: iso-target $(addprefix $(ISO_TARGET)/isolinux/, $(SYSLINUX_FILES))
+$(ISO_TARGET)/.iso-modules: iso-target $(addprefix $(ISO_TARGET)/isolinux/)
 	@echo iso-modules
 	@yes n | tr -d '\n' | $(ISO_SOURCE)/scripts/chroot-build lrm -n $(filter-out $(ISO_MODULES), $(ALL_MODULES))
 	@rm -rf $(ISO_TARGET)/usr/lib/python*
@@ -38,7 +33,7 @@ iso-modules: $(ISO_TARGET)/.iso-modules
 
 
 # Prepare target files
-ISO_ETC_FILES=lsb-release os-release fstab motd issue issue.net
+ISO_ETC_FILES=os-release fstab motd issue issue.net
 
 $(ISO_TARGET)/etc/%: $(ISO_SOURCE)/livecd/template/etc/% iso-modules
 	@sed -e 's:%VERSION%:$(ISO_VERSION):g' -e 's:%CODENAME%:$(ISO_CODENAME):g' -e 's:%DATE%:$(ISO_DATE):g' -e 's:%KERNEL%:$(ISO_KERNEL):g' -e 's:%CNAME%:$(ISO_CNAME):g' -e 's:%COPYRIGHTYEAR%:$(ISO_COPYRIGHTYEAR):g' -e 's:%LABEL%:LUNAR_$(ISO_MAJOR):' $< > $@
@@ -73,56 +68,6 @@ $(ISO_TARGET)/.iso-strip: iso-modules
 iso-strip: $(ISO_TARGET)/.iso-strip
 
 
-# Copy the isolinux files to the target
-ISOLINUX_FILES=README f1.txt f2.txt f3.txt generate-iso.sh isolinux.cfg
-
-.SECONDARY: $(addprefix $(ISO_TARGET)/usr/share/syslinux/, $(SYSLINUX_FILES))
-$(addprefix $(ISO_TARGET)/usr/share/syslinux/, $(SYSLINUX_FILES)): $(ISO_TARGET)/.iso-isolinux
-	@test -f $@
-	@touch $@
-
-$(ISO_TARGET)/isolinux/isolinux.bin: $(ISO_TARGET)/usr/share/syslinux/isolinux.bin
-	@cp $< $@
-
-$(ISO_TARGET)/isolinux/isohdpfx.bin: $(ISO_TARGET)/usr/share/syslinux/isohdpfx.bin
-	@cp $< $@
-
-$(ISO_TARGET)/isolinux/ldlinux.c32: $(ISO_TARGET)/usr/share/syslinux/ldlinux.c32
-	@cp $< $@
-
-$(ISO_TARGET)/isolinux/libcom32.c32: $(ISO_TARGET)/usr/share/syslinux/libcom32.c32
-	@cp $< $@
-
-$(ISO_TARGET)/isolinux/libutil.c32: $(ISO_TARGET)/usr/share/syslinux/libutil.c32
-	@cp $< $@
-
-$(ISO_TARGET)/boot/linux: $(ISO_TARGET)/.iso-isolinux
-	@test -f $@
-	@touch $@
-
-$(ISO_TARGET)/isolinux/linux: $(ISO_TARGET)/boot/linux
-	@cp $< $@
-
-$(ISO_TARGET)/boot/initrd: $(ISO_TARGET)/.iso-isolinux
-	@test -f $@
-	@touch $@
-
-$(ISO_TARGET)/isolinux/initrd: $(ISO_TARGET)/boot/initrd
-	@cp $< $@
-
-$(ISO_TARGET)/isolinux/%: $(ISO_SOURCE)/isolinux/% $(ISO_TARGET)/.iso-isolinux
-	@sed -e 's:%VERSION%:$(ISO_VERSION):g' -e 's:%CODENAME%:$(ISO_CODENAME):g' -e 's:%DATE%:$(ISO_DATE):g' -e 's:%KERNEL%:$(ISO_KERNEL):g' -e 's:%CNAME%:$(ISO_CNAME):g' -e 's:%COPYRIGHTYEAR%:$(ISO_COPYRIGHTYEAR):g' -e 's:%LABEL%:LUNAR_$(ISO_MAJOR):' $< > $@
-
-$(ISO_TARGET)/isolinux/%: $(ISO_SOURCE)/isolinux/%.$(ISO_ARCH) $(ISO_TARGET)/.iso-isolinux
-	@sed -e 's:%VERSION%:$(ISO_VERSION):g' -e 's:%CODENAME%:$(ISO_CODENAME):g' -e 's:%DATE%:$(ISO_DATE):g' -e 's:%KERNEL%:$(ISO_KERNEL):g' -e 's:%CNAME%:$(ISO_CNAME):g' -e 's:%COPYRIGHTYEAR%:$(ISO_COPYRIGHTYEAR):g' -e 's:%LABEL%:LUNAR_$(ISO_MAJOR):' $< > $@
-
-$(ISO_TARGET)/.iso-isolinux: iso-target
-	@echo iso-isolinux
-	@mkdir -p $(ISO_TARGET)/isolinux
-	@touch $@
-
-iso-isolinux: $(ISO_TARGET)/.iso-isolinux $(addprefix $(ISO_TARGET)/isolinux/, $(SYSLINUX_FILES)) $(ISO_TARGET)/isolinux/linux $(ISO_TARGET)/isolinux/initrd $(addprefix $(ISO_TARGET)/isolinux/, $(ISOLINUX_FILES))
-
 # Setup EFI for USB and CD
 $(ISO_TARGET)/.iso-efi: iso-target
 	@echo "Setting up iso-efi"
@@ -148,13 +93,8 @@ $(ISO_TARGET)/EFI/lunariso/efiboot.img: $(ISO_TARGET)/.iso-efi
 	@echo "Creating EFI boot image"
 	@$(ISO_SOURCE)/scripts/create-efi-image
 
-ifeq ($(ISO_ARCH),x86_64)
 XORRISO_EFI_OPTS := -append_partition 2 0xef $(ISO_TARGET)/EFI/lunariso/efiboot.img -eltorito-alt-boot -e --interval:appended_partition_2:all:: -no-emul-boot -isohybrid-gpt-basdat
-iso-efi: $(ISO_TARGET)/.iso-efi $(ISO_TARGET)/EFI/boot/bootx64.efi $(ISO_TARGET)/EFI/boot/HashTool.efi $(ISO_TARGET)/EFI/boot/loader.efi $(ISO_TARGET)/loader/loader.conf $(ISO_TARGET)/loader/entries/lunariso-x86_64.conf $(ISO_TARGET)/EFI/lunariso/efiboot.img
-else
-iso-efi:
-	@$(SHELL) -c true
-endif
+iso-efi: $(ISO_TARGET)/.iso-efi $(ISO_TARGET)/EFI/boot/bootx64.efi $(ISO_TARGET)/EFI/boot/HashTool.efi $(ISO_TARGET)/EFI/boot/loader.efi $(ISO_TARGET)/loader/loader.conf $(ISO_TARGET)/loader/entries/lunariso-x86_64.conf $(ISO_TARGET)/EFI/moonpenguin/efiboot.img
 
 # Generate squashfs image
 $(ISO_TARGET)/.iso-sfs: iso-target iso-strip installer
@@ -204,7 +144,7 @@ $(ISO_SOURCE)/lunar-$(ISO_VERSION).iso: iso-tools iso-files iso-isolinux iso-efi
 	-m '$(ISO_TARGET)/srv' \
 	-m '$(ISO_TARGET)/sys' \
 	-m '$(ISO_TARGET)/tmp' \
-	-publisher "Lunar Linux - http://www.lunar-linux.org/" \
-	-volid 'LUNAR_$(ISO_MAJOR)' \
-	-appid 'Lunar-$(ISO_VERSION)' $(ISO_TARGET)
+	-publisher "Moon Penguin" \
+	-volid 'MP_$(ISO_MAJOR)' \
+	-appid 'MoonPenguin-$(ISO_VERSION)' $(ISO_TARGET)
 	@mv $@.tmp $@
