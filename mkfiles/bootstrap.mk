@@ -42,12 +42,12 @@ $(ISO_SOURCE)/cache/.copied:
 # note: use cat after grep to ignore the exit code of grep
 $(ISO_TARGET)/.modules: $(ISO_SOURCE)/cache/.copied
 	@echo bootstrap-lunar
-	@mkdir -p $(ISO_TARGET)
+	@mkdir -pv $(ISO_TARGET)
 	@for archive in $(ISO_SOURCE)/cache/*-$(ISO_BUILD).tar.xz ; do \
-	  mkdir /tmp/$(archive) || exit 1 ; \
-	  tar -xf "$$archive" -C /tmp/$(archive) || exit 1 ; \
-	  rsync -a --preserve-dirlinks /tmp/$(archive)/* $(ISO_TARGET) || exit 1 ; \
-	  rm -rf /tmp/$(archive) || exit 1 ; \
+	  mkdir -pv /tmp/"$$archive" || exit 1 ; \
+	  tar -xf "$$archive" -C /tmp/"$$archive" || exit 1 ; \
+	  rsync -a --keep-dirlinks /tmp/"$$archive"/* $(ISO_TARGET) || exit 1 ; \
+	  rm -rf /tmp/"$$archive" || exit 1 ; \
 	done
 	@mkdir -p $(ISO_TARGET)/var/state/lunar
 	@touch $(ISO_TARGET)/var/state/lunar/packages.backup

@@ -1,0 +1,115 @@
+#!/bin/bash
+
+#############################################################
+#                                                           #
+# Automatically create a basic partition table on a disk    #
+#                                                           #
+#############################################################
+#                                                           #
+# Copyright 2023 by Dave Brown                              #
+#                                                           #
+#############################################################
+#                                                           #
+# This file is released under the GPLv2                     #
+#                                                           #
+#############################################################
+
+##########################################################################
+# This creates a partition table designed for sysext and sysupdate::
+#
+# - the root / partition is small, since all the programs are in /usr.
+#   It's only 500mib in case you put some things /root (don't do this),
+#   or install programs in /opt (avoid when possible).
+# - usr_a and usr_b for A/B updates. These will be read-only milestone
+#   updates - the user won't be installing into this.
+# - verity partitions for the above
+# - large var partition - user installed programs will go here, using
+#   systemd-sysext.
+# - a /home partition for whatever space remains.
+#
+##########################################################################
+
+express_mkpart() {
+    local DISK
+    local PARTNUM
+    local START
+    local FORCE
+    local ENDSECTOR
+
+    DISK=$1
+
+    DISKSIZE=$(parted $DISK 'unit mib print devices' |
+               grep $DISK |
+               sed 's/.*(\(.*\)mib)/\1/i')
+    ENDSECTOR=$(sgdisk -E "$1")
+
+    # freshen up disk
+    sgdisk -og $DISK
+
+    PARTNUM=0
+    START=0
+
+# PARTITIONS[${#PARTITIONS[@]}]="$PART:$MNTPNT:$FSYS:$MNT_OPTS:$FSCK_PASS:$CHECK:$FORCE:$FORMAT"
+# turn this into a loop maybe?
+# can this be subvolumes??
+    # efi - 512mib
+    sgdisk -I -n 1:0:+512M -c 1:"ESP" -t 1:ef00
+    PARTITIONS[${#PARTITIONS[@]}]="${DISK}${PARTNUM}:/efi:${BOOT_FS}:$(determine_mount_opts ${DISK} ${BOOT_FS}):$(determine_fsck_pass /efi)::${FORCE}:yes"
+    BOOT=${DISK}${PARTNUM}
+    block_devices use ${DISK}${PARTNUM}
+
+    # root - 500mib
+    OPENSECTOR_2=$(sgdisk -F "$1")
+    sgdisk -I -n 2:"$OPENSECTOR":+500M -c 2:"ROOT" -t 2:8304
+    PARTITIONS[${#PARTITIONS[@]}]="${DISK}${PARTNUM}:/:btrfs:$(determine_mount_opts ${DISK} btrfs):$(determine_fsck_pass /)::-F:yes"
+    ROOT=${DISK}${PARTNUM}
+    block_devices use ${DISK}${PARTNUM}
+
+    # format as btrfs, create subvolumes
+    mkfs.btrfs -L OS
+
+
+    # root verity - 50mib
+    OPENSECTOR=$(sgdisk -F "$1")
+    sgdisk -I -n 3:$OPENSECTOR:+50M -c 3:"ROOT_VERITY" -t 3:830c
+    PARTITIONS[${#PARTITIONS[@]}]="${DISK}${PARTNUM}::btrfs:$(determine_mount_opts ${DISK} btrfs):$(determine_fsck_pass verity)::-F:yes"
+
+    # usr_a - 3gib
+    OPENSECTOR=$(sgdisk -F "$1")
+    sgdisk -I -n 4:$OPENSECTOR:+3G -c 4:"USR_A" -t 4:8314
+    PARTITIONS[${#PARTITIONS[@]}]="${DISK}${PARTNUM}:/usr:btrfs:$(determine_mount_opts ${DISK} btrfs):$(determine_fsck_pass /usr)::-F:yes"
+
+    # usr_a verity -300mb
+    OPENSECTOR=$(sgdisk -F "$1")
+    sgdisk -I -n 5:$OPENSECTOR:+300M -c 5:"USR_A_VERITY" -t 5:831c
+    PARTITIONS[${#PARTITIONS[@]}]="${DISK}${PARTNUM}::btrfs:$(determine_mount_opts ${DISK} btrfs):$(determine_fsck_pass verity)::-F:yes"
+
+    # usr_b -3gib
+    OPENSECTOR=$(sgdisk -F "$1")
+    sgdisk -I -n 6:$OPENSECTOR:+3G -c 6:"USR_B" -t 6:8314
+    PARTITIONS[${#PARTITIONS[@]}]="${DISK}${PARTNUM}:/usr:btrfs:$(determine_mount_opts ${DISK} btrfs):$(determine_fsck_pass /usr)::-F:yes"
+
+    # usr_b verity - 300mib
+    OPENSECTOR=$(sgdisk -F "$1")
+    sgdisk -I -n 7:$OPENSECTOR:+300M -c 7:"USR_B_VERITY" -t 7:832c
+    PARTITIONS[${#PARTITIONS[@]}]="${DISK}${PARTNUM}::btrfs:$(determine_mount_opts ${DISK} btrfs):$(determine_fsck_pass verity)::-F:yes"
+
+    # var - 80gib
+    OPENSECTOR=$(sgdisk -F "$1")
+    sgdisk -I -n 8:$OPENSECTOR:+80G -c 8:"VAR" -t 8:8310
+
+    # home - rest of disk
+    OPENSECTOR=$(sgdisk -F "$1")
+    sgdisk -I -n 9:$OPENSECTOR:"$ENDSECTOR" -c 9:"HOME" -t 9:8302
+
+    # Make sure the rest of the installer sees the new partitions
+    sync
+    partprobe $DISK
+
+    # Now we can skip selecting a swap file (or partition), and we don't
+    # have to select partitions either if we don't want to
+    DONE_PARTITIONING=1
+    L_OK=
+    T_OK=
+    STEP=6
+}

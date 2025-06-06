@@ -70,6 +70,7 @@ ISO_MODULES=acl            \
             procps         \
             popt           \
             readline       \
+            rsync          \
             sed            \
             shadow         \
             systemd        \
